@@ -80,6 +80,9 @@ public class UI_InGame : MonoBehaviour
 
     private void Start()
     {
+        if (timerText != null)
+            timerText.gameObject.SetActive(false);
+
         fadeEffect.ScreenFade(0, 1);
     }
 

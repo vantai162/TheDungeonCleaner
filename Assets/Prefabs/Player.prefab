@@ -128,6 +128,13 @@ MonoBehaviour:
   - {fileID: -7673242495530757358, guid: e7aad2ffa02010f4db1119d68fd27777, type: 3}
   - {fileID: -8592424096107761443, guid: e7aad2ffa02010f4db1119d68fd27777, type: 3}
   dustFx: {fileID: 5535457225426136382}
+  criticalBlinkColor: {r: 1, g: 0, b: 0, a: 1}
+  criticalBlinkInterval: 0.2
+  maxHealth: 100
+  healthDrainPerSecond: 10
+  criticalThreshold: 0.4
+  criticalSpeedMultiplier: 1
+  healthBar: {fileID: 0}
 --- !u!61 &7391925584207425953
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -228,6 +235,8 @@ MonoBehaviour:
     m_Bits: 8
   grabBufferWindow: 0.135
   releaseBufferWindow: 0.135
+  isDragging: 0
+  isMoving: 0
 --- !u!1001 &6736336957247947161
 PrefabInstance:
   m_ObjectHideFlags: 0
