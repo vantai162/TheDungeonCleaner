@@ -20,17 +20,6 @@ public class GameManager : MonoBehaviour
     [Header("Boosters")]
     public bool freezeTimeActive = false;
     
-    private Dictionary<int, float> levelMaxTimes = new()
-    {
-        {1, 999f},
-        {2, 90f},
-        {3, 120f},
-        {4, 180f},
-        {5, 240f},
-        {6, 300f},
-        {7, 360f},
-    };
-    
     [Header("Rewards")]
     private Dictionary<int, int> levelRewards = new()
     {
@@ -101,7 +90,7 @@ public class GameManager : MonoBehaviour
         inGameUI = UI_InGame.instance;
         CollectGameInfo();
         
-        InitializeLevelTimer();
+        levelTimer = 0f;
     }
 
     private void CollectGameInfo()
@@ -112,29 +101,11 @@ public class GameManager : MonoBehaviour
         UpdateBoxCount();
     }
     
-    private void InitializeLevelTimer()
-    {
-        levelTimer = 0f;
-        maxLevelTime = levelMaxTimes[currentLevelIndex];
-    }
-
     private void Update()
     {
-        // Only update timer if level hasn't been completed yet
-        if (!levelFinishProcessed)
+        if (!levelFinishProcessed && !freezeTimeActive)
         {
-            if (!freezeTimeActive && levelTimer < maxLevelTime)
-            {
-                levelTimer += Time.deltaTime;
-            }
-
-            float remainingTime = maxLevelTime - levelTimer;
-            UI_InGame.instance.UpdateTimerUI(remainingTime);
-
-            if (remainingTime <= 0f)
-            {
-                TimeOut();
-            }
+            levelTimer += Time.deltaTime;
         }
     }
     
@@ -154,7 +125,6 @@ public class GameManager : MonoBehaviour
 
     public void UpdatePlayerCount()
     {
-        
         if (inGameUI == null || playerPoints == null) return;
     
         int occupiedPlayers = 0;
@@ -167,18 +137,15 @@ public class GameManager : MonoBehaviour
         inGameUI.UpdatePlayerUI(occupiedPlayers, playerPoints.Length);
     }
 
-    private void TimeOut()
+    public void ShowLoseUI()
     {
-        CancelInvoke(nameof(CheckLevelCompletion));
         if (loseUI != null)
         {
             loseUI.SetActive(true);
-            // Stop all player movement/input when showing lose UI
             DisablePlayerControls();
         }
-        else
+        else if (inGameUI != null)
         {
-            // Fallback if UI not assigned
             inGameUI.fadeEffect.ScreenFade(1, 1.5f, ReturnToMainMenu);
         }
     }
@@ -266,18 +233,9 @@ public class GameManager : MonoBehaviour
     {
         int currentMoney = PlayerPrefs.GetInt("MoneyInBank", 0);
         int reward = 5;
-        
-        float bestTime = PlayerPrefs.GetFloat("Level" + currentLevelIndex + "BestTime", 999);
 
-        if (Mathf.Approximately(bestTime, 999))
-        {
-            if (levelRewards.ContainsKey(currentLevelIndex))
-                reward = levelRewards[currentLevelIndex];
-            else
-                reward = 5;
-        }
-        else
-            reward = 5;
+        if (levelRewards.ContainsKey(currentLevelIndex))
+            reward = levelRewards[currentLevelIndex];
         
         PlayerPrefs.SetInt("MoneyInBank", currentMoney + reward);
         PlayerPrefs.Save();
