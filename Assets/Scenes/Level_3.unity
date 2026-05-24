@@ -4452,6 +4452,10 @@ PrefabInstance:
       propertyPath: healthDrainPerSecond
       value: 5
       objectReference: {fileID: 0}
+    - target: {fileID: 1667100037877936868, guid: 9afe7d03bcc29bb4eb79865f89cc707c, type: 3}
+      propertyPath: criticalSpeedMultiplier
+      value: 0.6
+      objectReference: {fileID: 0}
     - target: {fileID: 2943179574419912269, guid: 9afe7d03bcc29bb4eb79865f89cc707c, type: 3}
       propertyPath: m_Name
       value: Player

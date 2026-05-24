@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -19,6 +19,8 @@ public class UI_InGame : MonoBehaviour
     private Image lastResortImage;
     private bool lastResortAvailable = false;
     private float lastResortThreshold = 60f;
+    [SerializeField] private GameObject checkPointMarkerPrefab; // THÊM DÒNG NÀY: Prefab của ngôi sao
+    private List<GameObject> activeCheckPointMarkers = new();
 
     [SerializeField] private GameObject pauseUI;
     [SerializeField] private GameObject grabButton;
@@ -26,13 +28,18 @@ public class UI_InGame : MonoBehaviour
     [SerializeField] private Button speedUpButton;
     [SerializeField] private Button checkPointButton;
     [SerializeField] private Button lastResortButton;
-    
+
+    [Header("Dio The World Effect")]
+    [SerializeField] private GameObject theWorldOverlay;
+    private Coroutine theWorldCoroutine; // THÊM BIẾN NÀY LƯU GIỮ COROUTINE
+
     private bool freezeTimeOnCooldown = false;
     private bool speedUpOnCooldown = false;
     private float freezeTimeCooldownRemaining = 0f;
     private float speedUpCooldownRemaining = 0f;
     private bool checkpointCreated = false;
     private Dictionary<Transform, Vector3> savePositions = new();
+    private Dictionary<Player, float> saveHealths = new(); // Thêm dòng này
     private Vector2 savedPlayerDirection;
 
     private Image grabButtonImage;
@@ -228,32 +235,115 @@ public class UI_InGame : MonoBehaviour
     {
         int minutes = Mathf.FloorToInt(timer / 60f);
         int seconds = Mathf.FloorToInt(timer % 60f);
-        timerText.text = $"Remaining time: {minutes:00}:{seconds:00}";
         
-        if (timer <= lastResortThreshold && !lastResortAvailable && lastResortButton != null)
+    }
+
+    // Thêm hàm public mới này bên trong UI_InGame
+    public void CheckLastResortAvailability(bool isCritical, float currentHealth, float maxHealth)
+    {
+        // Kích hoạt khi rơi vào trạng thái Critical lần đầu
+        if (isCritical && !lastResortAvailable && lastResortButton != null)
         {
             lastResortAvailable = true;
             lastResortButton.interactable = true;
             AudioManager.instance.PlaySFX(5); // Alert sound when available
-        
+
             // Visual indication
             StartCoroutine(PulseLastResortButton());
         }
-    
-        // Update visual cooldown if not yet available
+
+        // Cập nhật vòng quay visual (cooldown) dựa trên lượng máu đã mất cho tới khi tụt xuống Critical
         if (!lastResortAvailable && lastResortButton && lastResortImage)
         {
-            float fillAmount = 1f - (timer - lastResortThreshold) / (GameManager.instance.maxLevelTime - lastResortThreshold);
-            lastResortImage.fillAmount = Mathf.Clamp01(fillAmount);
+            // Calculate progress towards critical threshold
+            float criticalHealthThreshold = maxHealth * 0.3f; // Dựa theo biến criticalThreshold trong Player
+
+            // Lượng máu cần mất thêm để đến critical
+            float healthAboveCritical = currentHealth - criticalHealthThreshold;
+            float totalHealthRangeToCritical = maxHealth - criticalHealthThreshold;
+
+            if (totalHealthRangeToCritical > 0)
+            {
+                float fillAmount = Mathf.Clamp01(healthAboveCritical / totalHealthRangeToCritical);
+                lastResortImage.fillAmount = fillAmount;
+            }
         }
     }
-    
+
     public void OnFreezeTimeButtonPressed()
     {
-        GameManager.instance.FreezeTime(60f);
-        timerText.color = Color.cyan;
-        Invoke(nameof(ResetTimerTextColor), 60f);
+        GameManager.instance.FreezeTime(40f);
         freezeTimeButton.gameObject.SetActive(false);
+
+        // 1. Phát âm thanh ngưng đọng thời gian hệt như Dio
+        AudioManager.instance.PlaySFX(12);
+
+        // Đảm bảo không có coroutine nào cũ đang chạy lặp đè
+        if (theWorldCoroutine != null)
+            StopCoroutine(theWorldCoroutine);
+            
+        // 2. Kích hoạt hiệu ứng hình ảnh
+        theWorldCoroutine = StartCoroutine(TheWorldEffectRoutine(40f));
+    }
+
+    private IEnumerator TheWorldEffectRoutine(float duration)
+    {
+        Image overlayImg = theWorldOverlay?.GetComponent<Image>();
+        if (overlayImg == null) yield break;
+
+        theWorldOverlay.SetActive(true);
+
+        // Phase 1: Flash trắng (chạy bằng realtime vì timeScale sắp = 0)
+        overlayImg.color = new Color(1f, 1f, 1f, 0.9f);
+        yield return new WaitForSecondsRealtime(0.08f);
+
+        // Phase 2: Chuyển sang màu "frozen world" - tím xanh đặc trưng Jojo
+        overlayImg.color = new Color(0.15f, 0.05f, 0.3f, 0.35f);
+        // Thêm: chuyển dần từ trắng sang tím trong 0.4s
+        float transitionTime = 0.4f;
+        float elapsed = 0f;
+        Color flashColor = new Color(1f, 1f, 1f, 0.9f);
+        Color frozenColor = new Color(0.15f, 0.05f, 0.3f, 0.35f);
+        while (elapsed < transitionTime)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            overlayImg.color = Color.Lerp(flashColor, frozenColor, elapsed / transitionTime);
+            yield return null;
+        }
+
+        // Phase 2 giờ có màu đúng rồi, giữ thêm 1s để người chơi "cảm nhận" moment
+        yield return new WaitForSecondsRealtime(1.0f);
+        // Đổi nhạc sang BGM frozen
+        AudioManager.instance.PlayBGM(2);
+
+        // Phase 3: Giữ frozen, fade nhẹ overlay về alpha thấp hơn cho dễ chơi
+        float holdTime = duration - 0.5f;
+        elapsed = 0f;
+        while (elapsed < holdTime)
+        {
+            elapsed += Time.unscaledDeltaTime; // QUAN TRỌNG: unscaledDeltaTime vì timeScale = 0
+                                               // Nhấp nháy nhẹ để tạo cảm giác "thời gian đứng yên"
+            float pulse = 0.55f + Mathf.Sin(elapsed * 1.5f) * 0.05f;
+            overlayImg.color = new Color(0.15f, 0.05f, 0.3f, pulse);
+            yield return null;
+        }
+
+        // Phase 4: Fade out overlay trước khi resume
+        AudioManager.instance.PlaySFX(13); // SFX time resume
+        AudioManager.instance.PlayBGM(1); // Quay lại nhạc nền bình thường
+        float fadeTime = 0.5f;
+        elapsed = 0f;
+        Color fromColor = overlayImg.color;
+        while (elapsed < fadeTime)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float t = elapsed / fadeTime;
+            overlayImg.color = Color.Lerp(fromColor, new Color(1f, 1f, 1f, 0f), t);
+            yield return null;
+        }
+
+        // Phase 5: Cleanup
+        theWorldOverlay.SetActive(false);
     }
 
     private void ResetTimerTextColor()
@@ -341,13 +431,29 @@ public class UI_InGame : MonoBehaviour
     private void CreateCheckpoint()
     {
         savePositions.Clear();
-        
+        saveHealths.Clear(); // Xóa dữ liệu cũ
+
+        // Dọn dẹp các ngôi sao của lần Save trước (nếu có lỗi sót)
+        foreach (var marker in activeCheckPointMarkers)
+        {
+            if (marker != null) Destroy(marker);
+        }
+        activeCheckPointMarkers.Clear();
+
         Player[] players = FindObjectsByType<Player>(FindObjectsSortMode.None);
         foreach (var player in players)
         {
             savePositions[player.transform] = player.transform.position;
+            saveHealths[player] = player.CurrentHealth; // Lưu lượng máu hiện tại của người chơi
+
+            // THÊM ĐOẠN NÀY: Sinh ra hình ảnh tại đúng vị trí của Player
+            if (checkPointMarkerPrefab != null)
+            {
+                GameObject marker = Instantiate(checkPointMarkerPrefab, player.transform.position, Quaternion.identity);
+                activeCheckPointMarkers.Add(marker);
+            }
         }
-        
+
         Box[] boxes = FindObjectsByType<Box>(FindObjectsSortMode.None);
         foreach (Box box in boxes)
         {
@@ -365,6 +471,15 @@ public class UI_InGame : MonoBehaviour
         if (playerBoxInteraction != null && playerBoxInteraction.isDragging)
         {
             playerBoxInteraction.ReleaseBox();
+        }
+
+        // Khôi phục lại máu đã lưu (Thêm khối này)
+        foreach (var kvp in saveHealths)
+        {
+            if (kvp.Key != null)
+            {
+                kvp.Key.RestoreHealth(kvp.Value);
+            }
         }
 
         // Restore saved positions
@@ -414,6 +529,13 @@ public class UI_InGame : MonoBehaviour
 
         checkpointCreated = false;
         checkPointButtonText.text = "Create Checkpoint";
+
+        // THÊM ĐOẠN NÀY: Dọn dẹp và xóa các ngôi sao trên bản đồ khỏi game
+        foreach (var marker in activeCheckPointMarkers)
+        {
+            if (marker != null) Destroy(marker);
+        }
+        activeCheckPointMarkers.Clear();
     }
     
     private IEnumerator PulseLastResortButton()
@@ -427,6 +549,28 @@ public class UI_InGame : MonoBehaviour
             yield return new WaitForSeconds(pulseTime);
             lastResortImage.color = originalColor;
             yield return new WaitForSeconds(pulseTime);
+        }
+    }
+
+    private void OnDestroy()
+    {
+        // Khi Scene bị reset cứng hoặc thoát về Main Menu, dừng cái bóng đêm The World lại.
+        if (theWorldCoroutine != null)
+        {
+            StopCoroutine(theWorldCoroutine);
+            
+            // Xóa sổ màu màn hình âm bản (đề phòng lưu bộ nhớ đệm)
+            if (theWorldOverlay != null)
+            {
+                theWorldOverlay.SetActive(false);
+            }
+            
+            // Ép đổi BGM trở lại bài mặc định và hủy hết các hiệu ứng dị thường
+            if (AudioManager.instance != null)
+            {
+                // PlayRandomBGM() hoặc PlayBGM(1) tùy cài đặt mặc định của game bạn
+                AudioManager.instance.PlayBGM(1); 
+            }
         }
     }
 }
