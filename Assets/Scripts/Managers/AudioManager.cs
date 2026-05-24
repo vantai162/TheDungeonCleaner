@@ -32,7 +32,7 @@ public class AudioManager : MonoBehaviour
     
     public void PlayRandomBGM()
     {
-        bgmIndex = Random.Range(0, bgm.Length);
+        bgmIndex = Random.Range(0, bgm.Length-1);
         PlayBGM(bgmIndex);
     }
     
@@ -46,6 +46,8 @@ public class AudioManager : MonoBehaviour
         bgmIndex = bgmToPlay;
         bgm[bgmToPlay].Play();
     }
+
+    public void PauseBGM() => bgm[bgmIndex].Pause();
 
     public void PlaySFX(int sfxToPlay, bool randomPitch = true)
     {
