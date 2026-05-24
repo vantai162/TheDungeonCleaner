@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -19,6 +19,8 @@ public class UI_InGame : MonoBehaviour
     private Image lastResortImage;
     private bool lastResortAvailable = false;
     private float lastResortThreshold = 60f;
+    [SerializeField] private GameObject checkPointMarkerPrefab; // THÊM DÒNG NÀY: Prefab của ngôi sao
+    private List<GameObject> activeCheckPointMarkers = new();
 
     [SerializeField] private GameObject pauseUI;
     [SerializeField] private GameObject grabButton;
@@ -33,6 +35,7 @@ public class UI_InGame : MonoBehaviour
     private float speedUpCooldownRemaining = 0f;
     private bool checkpointCreated = false;
     private Dictionary<Transform, Vector3> savePositions = new();
+    private Dictionary<Player, float> saveHealths = new(); // Thêm dòng này
     private Vector2 savedPlayerDirection;
 
     private Image grabButtonImage;
@@ -228,31 +231,46 @@ public class UI_InGame : MonoBehaviour
     {
         int minutes = Mathf.FloorToInt(timer / 60f);
         int seconds = Mathf.FloorToInt(timer % 60f);
-        timerText.text = $"Remaining time: {minutes:00}:{seconds:00}";
         
-        if (timer <= lastResortThreshold && !lastResortAvailable && lastResortButton != null)
+    }
+
+    // Thêm hàm public mới này bên trong UI_InGame
+    public void CheckLastResortAvailability(bool isCritical, float currentHealth, float maxHealth)
+    {
+        // Kích hoạt khi rơi vào trạng thái Critical lần đầu
+        if (isCritical && !lastResortAvailable && lastResortButton != null)
         {
             lastResortAvailable = true;
             lastResortButton.interactable = true;
             AudioManager.instance.PlaySFX(5); // Alert sound when available
-        
+
             // Visual indication
             StartCoroutine(PulseLastResortButton());
         }
-    
-        // Update visual cooldown if not yet available
+
+        // Cập nhật vòng quay visual (cooldown) dựa trên lượng máu đã mất cho tới khi tụt xuống Critical
         if (!lastResortAvailable && lastResortButton && lastResortImage)
         {
-            float fillAmount = 1f - (timer - lastResortThreshold) / (GameManager.instance.maxLevelTime - lastResortThreshold);
-            lastResortImage.fillAmount = Mathf.Clamp01(fillAmount);
+            // Calculate progress towards critical threshold
+            float criticalHealthThreshold = maxHealth * 0.3f; // Dựa theo biến criticalThreshold trong Player
+
+            // Lượng máu cần mất thêm để đến critical
+            float healthAboveCritical = currentHealth - criticalHealthThreshold;
+            float totalHealthRangeToCritical = maxHealth - criticalHealthThreshold;
+
+            if (totalHealthRangeToCritical > 0)
+            {
+                float fillAmount = Mathf.Clamp01(healthAboveCritical / totalHealthRangeToCritical);
+                lastResortImage.fillAmount = fillAmount;
+            }
         }
     }
-    
+
     public void OnFreezeTimeButtonPressed()
     {
         GameManager.instance.FreezeTime(60f);
-        timerText.color = Color.cyan;
-        Invoke(nameof(ResetTimerTextColor), 60f);
+        //timerText.color = Color.cyan;
+        //Invoke(nameof(ResetTimerTextColor), 60f);
         freezeTimeButton.gameObject.SetActive(false);
     }
 
@@ -341,13 +359,29 @@ public class UI_InGame : MonoBehaviour
     private void CreateCheckpoint()
     {
         savePositions.Clear();
-        
+        saveHealths.Clear(); // Xóa dữ liệu cũ
+
+        // Dọn dẹp các ngôi sao của lần Save trước (nếu có lỗi sót)
+        foreach (var marker in activeCheckPointMarkers)
+        {
+            if (marker != null) Destroy(marker);
+        }
+        activeCheckPointMarkers.Clear();
+
         Player[] players = FindObjectsByType<Player>(FindObjectsSortMode.None);
         foreach (var player in players)
         {
             savePositions[player.transform] = player.transform.position;
+            saveHealths[player] = player.CurrentHealth; // Lưu lượng máu hiện tại của người chơi
+
+            // THÊM ĐOẠN NÀY: Sinh ra hình ảnh tại đúng vị trí của Player
+            if (checkPointMarkerPrefab != null)
+            {
+                GameObject marker = Instantiate(checkPointMarkerPrefab, player.transform.position, Quaternion.identity);
+                activeCheckPointMarkers.Add(marker);
+            }
         }
-        
+
         Box[] boxes = FindObjectsByType<Box>(FindObjectsSortMode.None);
         foreach (Box box in boxes)
         {
@@ -365,6 +399,15 @@ public class UI_InGame : MonoBehaviour
         if (playerBoxInteraction != null && playerBoxInteraction.isDragging)
         {
             playerBoxInteraction.ReleaseBox();
+        }
+
+        // Khôi phục lại máu đã lưu (Thêm khối này)
+        foreach (var kvp in saveHealths)
+        {
+            if (kvp.Key != null)
+            {
+                kvp.Key.RestoreHealth(kvp.Value);
+            }
         }
 
         // Restore saved positions
@@ -414,6 +457,13 @@ public class UI_InGame : MonoBehaviour
 
         checkpointCreated = false;
         checkPointButtonText.text = "Create Checkpoint";
+
+        // THÊM ĐOẠN NÀY: Dọn dẹp và xóa các ngôi sao trên bản đồ khỏi game
+        foreach (var marker in activeCheckPointMarkers)
+        {
+            if (marker != null) Destroy(marker);
+        }
+        activeCheckPointMarkers.Clear();
     }
     
     private IEnumerator PulseLastResortButton()

@@ -80,6 +80,7 @@ public class Player : MonoBehaviour
     public bool IsDead => currentHealth <= 0f;
     public bool IsCriticalHealth => currentHealth > 0f && currentHealth <= maxHealth * criticalThreshold;
     public float CriticalSpeedMultiplier => criticalSpeedMultiplier;
+    public float CurrentHealth => currentHealth; // Thêm dòng này để cho phép InGameUI đọc máu 
 
 
 
@@ -389,6 +390,10 @@ public class Player : MonoBehaviour
         if (currentHealth <= 0f)
             return;
 
+        // Nếu power-up Freeze đang diễn ra, chặn việc tụt máu
+        if (GameManager.instance != null && GameManager.instance.freezeTimeActive)
+            return;
+
         healthDrainTimer += deltaTime;
 
         if (healthDrainTimer >= 1f)
@@ -404,6 +409,12 @@ public class Player : MonoBehaviour
         currentHealth = Mathf.Clamp(currentHealth + delta, 0f, maxHealth);
         UpdateHealthUI(currentHealth);
         UpdateState();
+
+        // Cập nhật tình trạng của LastResort qua UI_InGame
+        if (UI_InGame.instance != null)
+        {
+            UI_InGame.instance.CheckLastResortAvailability(IsCriticalHealth, currentHealth, maxHealth);
+        }
     }
 
     private void UpdateState()
@@ -420,5 +431,12 @@ public class Player : MonoBehaviour
     {
         if (healthBar != null)
             healthBar.SetHealth(health);
+    }
+
+    public void RestoreHealth(float health)
+    {
+        currentHealth = Mathf.Clamp(health, 0f, maxHealth);
+        UpdateHealthUI(currentHealth);
+        UpdateState();
     }
 }
