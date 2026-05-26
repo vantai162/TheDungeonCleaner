@@ -30,6 +30,7 @@ public class GameManager : MonoBehaviour
         {5, 30},
         {6, 40},
         {7, 50},
+        {8, 60},
     };
 
     private BoxPoint[] boxPoints;

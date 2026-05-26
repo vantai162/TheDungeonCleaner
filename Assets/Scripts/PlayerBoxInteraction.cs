@@ -226,7 +226,11 @@ public class PlayerBoxInteraction : MonoBehaviour
         bool playerBlockedByBox = playerPathColliders.Any(col => col.gameObject != currentBox.gameObject);
 
         bool isBlocked = playerBlockedByWall || playerBlockedByBox;
-        if (isBlocked)
+
+        // Check box movement strategy
+        bool boxCanMove = currentBox.CanMoveInDirection(direction);
+
+        if (isBlocked || !boxCanMove)
         {
             Vector3 bouncePos = startPosPlayer + direction * bounceDistance;
             AudioManager.instance.PlaySFX(0);
