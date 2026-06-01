@@ -53,8 +53,20 @@ public class Player : MonoBehaviour
         HandleFlip();
     }
 
+    public Vector2 GetTouchInputDirection()
+    {
+        return isButtonPressed ? currentButtonInput : Vector2.zero;
+    }
+
     public Vector2 GetMovementDirection()
     {
+        // Adapter Design Pattern: Delegate to active adapter via InputManager
+        if (InputManager.instance != null)
+        {
+            return InputManager.instance.GetMovementDirection();
+        }
+
+        // Fallback for editor/testing sandbox scenes without InputManager
         if (isButtonPressed)
             return currentButtonInput;
         
@@ -148,10 +160,20 @@ public class Player : MonoBehaviour
         if (isDraggingMode)
             return;
 
+        Vector2 movementDir = Vector2.zero;
+        if (InputManager.instance != null)
+        {
+            movementDir = InputManager.instance.GetMovementDirection();
+        }
+        else
+        {
+            movementDir = isButtonPressed ? currentButtonInput : Vector2.zero;
+        }
+
         // Flip based on either current input or last movement direction
-        if (currentButtonInput.x < 0 || (currentButtonInput == Vector2.zero && lastMovementDirection.x < 0))
+        if (movementDir.x < 0 || (movementDir == Vector2.zero && lastMovementDirection.x < 0))
             transform.localScale = new Vector3(-1, 1, 1);
-        else if (currentButtonInput.x > 0 || (currentButtonInput == Vector2.zero && lastMovementDirection.x > 0))
+        else if (movementDir.x > 0 || (movementDir == Vector2.zero && lastMovementDirection.x > 0))
             transform.localScale = new Vector3(1, 1, 1);
     }
 

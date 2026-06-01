@@ -56,7 +56,26 @@ public class PlayerBoxInteraction : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetKeyDown(grabToggleKey))
+        bool grabPressed = false;
+        bool undoPressed = false;
+        bool resetPressed = false;
+
+        // Adapter Design Pattern: Check inputs via active adapter in InputManager
+        if (InputManager.instance != null)
+        {
+            grabPressed = InputManager.instance.IsGrabPressed();
+            undoPressed = InputManager.instance.IsUndoPressed();
+            resetPressed = InputManager.instance.IsResetPressed();
+        }
+        else
+        {
+            // Fallback to legacy configured keys if InputManager is missing
+            grabPressed = Input.GetKeyDown(grabToggleKey);
+            undoPressed = Input.GetKeyDown(undoKey);
+            resetPressed = Input.GetKeyDown(resetKey);
+        }
+
+        if (grabPressed)
         {
             if (isDragging)
             {
@@ -94,17 +113,6 @@ public class PlayerBoxInteraction : MonoBehaviour
 
         if (!isDragging && !isMoving)
         {
-            // Vector2 input = Vector2.zero;
-            // PC keyboard input
-            // if (Input.GetKey(KeyCode.W))
-            //     input.y = 1;
-            // else if (Input.GetKey(KeyCode.S))
-            //     input.y = -1;
-            // if (Input.GetKey(KeyCode.D))
-            //     input.x = 1;
-            // else if (Input.GetKey(KeyCode.A))
-            //     input.x = -1;
-            
             // joystick input
             Vector2 input = playerComponent.lastMovementDirection;
 
@@ -114,12 +122,12 @@ public class PlayerBoxInteraction : MonoBehaviour
             HighlightGrabbableBox();
         }
 
-        if (Input.GetKeyDown(undoKey) && !isMoving)
+        if (undoPressed && !isMoving)
         {
             UndoMove();
         }
 
-        if (Input.GetKeyDown(resetKey))
+        if (resetPressed)
         {
             ResetLevel();
         }

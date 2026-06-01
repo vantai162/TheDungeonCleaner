@@ -6426,6 +6426,83 @@ RectTransform:
   m_AnchoredPosition: {x: -5, y: 0}
   m_SizeDelta: {x: -20, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1001 &1139294571
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 3630683465414729353, guid: da8e4d5e8c2d6c84898ffc0f49c19e06, type: 3}
+      propertyPath: mobileUIPanel
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 3630683465414729353, guid: da8e4d5e8c2d6c84898ffc0f49c19e06, type: 3}
+      propertyPath: desktopUIPanel
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 3630683465414729353, guid: da8e4d5e8c2d6c84898ffc0f49c19e06, type: 3}
+      propertyPath: currentInputMode
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3630683465414729353, guid: da8e4d5e8c2d6c84898ffc0f49c19e06, type: 3}
+      propertyPath: gamepadPromptPanel
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 3630683465414729353, guid: da8e4d5e8c2d6c84898ffc0f49c19e06, type: 3}
+      propertyPath: keyboardPromptPanel
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 3782367950874576160, guid: da8e4d5e8c2d6c84898ffc0f49c19e06, type: 3}
+      propertyPath: m_Name
+      value: InputManager
+      objectReference: {fileID: 0}
+    - target: {fileID: 8529180252031332548, guid: da8e4d5e8c2d6c84898ffc0f49c19e06, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -19.0423
+      objectReference: {fileID: 0}
+    - target: {fileID: 8529180252031332548, guid: da8e4d5e8c2d6c84898ffc0f49c19e06, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 4.95638
+      objectReference: {fileID: 0}
+    - target: {fileID: 8529180252031332548, guid: da8e4d5e8c2d6c84898ffc0f49c19e06, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8529180252031332548, guid: da8e4d5e8c2d6c84898ffc0f49c19e06, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8529180252031332548, guid: da8e4d5e8c2d6c84898ffc0f49c19e06, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8529180252031332548, guid: da8e4d5e8c2d6c84898ffc0f49c19e06, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8529180252031332548, guid: da8e4d5e8c2d6c84898ffc0f49c19e06, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8529180252031332548, guid: da8e4d5e8c2d6c84898ffc0f49c19e06, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8529180252031332548, guid: da8e4d5e8c2d6c84898ffc0f49c19e06, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8529180252031332548, guid: da8e4d5e8c2d6c84898ffc0f49c19e06, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: da8e4d5e8c2d6c84898ffc0f49c19e06, type: 3}
 --- !u!1 &1176968995
 GameObject:
   m_ObjectHideFlags: 0
@@ -6764,6 +6841,7 @@ MonoBehaviour:
   bgmSlider: {fileID: 1178426100}
   bgmSliderText: {fileID: 775327830}
   bgmParameter: bgm
+  layoutDropdown: {fileID: 0}
 --- !u!1 &1242328403
 GameObject:
   m_ObjectHideFlags: 0
@@ -10985,3 +11063,4 @@ SceneRoots:
   - {fileID: 1073103637}
   - {fileID: 358186264}
   - {fileID: 8239708366665476969}
+  - {fileID: 1139294571}

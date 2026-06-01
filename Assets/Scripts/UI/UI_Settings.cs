@@ -33,6 +33,17 @@ public class UI_Settings : MonoBehaviour
         audioMixer.SetFloat(bgmParameter, newValue);
     }
 
+    [Header("UI Layout Settings")]
+    [SerializeField] private TMPro.TMP_Dropdown layoutDropdown;
+
+    public void SetUILayoutMode(int modeIndex)
+    {
+        if (InputManager.instance != null)
+        {
+            InputManager.instance.SetUILayoutMode((UILayoutMode)modeIndex);
+        }
+    }
+
     private void OnDisable()
     {
         PlayerPrefs.SetFloat(sfxParameter, sfxSlider.value);
@@ -43,5 +54,10 @@ public class UI_Settings : MonoBehaviour
     {
         sfxSlider.value = PlayerPrefs.GetFloat(sfxParameter, .7f);
         bgmSlider.value = PlayerPrefs.GetFloat(bgmParameter, .7f);
+
+        if (layoutDropdown != null && InputManager.instance != null)
+        {
+            layoutDropdown.value = (int)InputManager.instance.GetUILayoutMode();
+        }
     }
 }
