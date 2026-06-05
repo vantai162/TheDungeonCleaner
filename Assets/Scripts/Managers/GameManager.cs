@@ -108,8 +108,25 @@ public class GameManager : MonoBehaviour
         {
             levelTimer += Time.deltaTime;
         }
+
+        if ((Input.GetKey(KeyCode.P) && Input.GetKeyDown(KeyCode.O)))
+        {
+            SkipLevel();
+        }
     }
-    
+
+    private void SkipLevel()
+    {
+        Debug.Log("Skip Level");
+        AddLevelReward();
+        SaveLevelProgression();
+
+        if (NoMoreLevels())
+            LoadLevelEnd();
+        else
+            LoadNextLevel();
+    }
+
     public void UpdateBoxCount()
     {
         if (inGameUI == null || boxPoints == null) return;
