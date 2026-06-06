@@ -95,7 +95,17 @@ public class UI_InGame : MonoBehaviour
 
     private void Update()
     {
-        if(Input.GetKeyDown(KeyCode.Escape))
+        bool pausePressed = false;
+        if (InputManager.instance != null)
+        {
+            pausePressed = InputManager.instance.IsPausePressed();
+        }
+        else
+        {
+            pausePressed = Input.GetKeyDown(KeyCode.Escape);
+        }
+
+        if (pausePressed)
         {
             PauseButton();
         }
@@ -118,7 +128,7 @@ public class UI_InGame : MonoBehaviour
     
     private void UpdateCooldowns()
     {
-        if (freezeTimeOnCooldown)
+        if (freezeTimeOnCooldown && freezeTimeImage != null)
         {
             freezeTimeCooldownRemaining -= Time.deltaTime;
             freezeTimeImage.fillAmount = 1 - (freezeTimeCooldownRemaining / 60f);
@@ -128,11 +138,12 @@ public class UI_InGame : MonoBehaviour
                 freezeTimeOnCooldown = false;
                 freezeTimeImage.fillAmount = 1f;
                 freezeTimeImage.color = new Color(1f, 1f, 1f, 1f);
-                freezeTimeButton.interactable = true;
+                if (freezeTimeButton != null)
+                    freezeTimeButton.interactable = true;
             }
         }
         
-        if (speedUpOnCooldown)
+        if (speedUpOnCooldown && speedUpImage != null)
         {
             speedUpCooldownRemaining -= Time.deltaTime;
             speedUpImage.fillAmount = 1 - (speedUpCooldownRemaining / 60f);
@@ -142,13 +153,23 @@ public class UI_InGame : MonoBehaviour
                 speedUpOnCooldown = false;
                 speedUpImage.fillAmount = 1f;
                 speedUpImage.color = new Color(1f, 1f, 1f, 1f);
-                speedUpButton.interactable = true;
+                if (speedUpButton != null)
+                    speedUpButton.interactable = true;
             }
         }
     }
     
     private void UpdateGrabButtonState()
     {
+        // Safety guard: if mobile buttons/texts are unassigned in this layout, return safely
+        if (grabText == null || grabButtonImage == null) return;
+
+        if (playerBoxInteraction == null)
+        {
+            playerBoxInteraction = FindFirstObjectByType<PlayerBoxInteraction>();
+            if (playerBoxInteraction == null) return;
+        }
+
         if (playerBoxInteraction.isDragging)
         {
             grabText.text = "Release";
@@ -168,6 +189,12 @@ public class UI_InGame : MonoBehaviour
 
     public void GrabReleaseButton()
     {
+        if (playerBoxInteraction == null)
+        {
+            playerBoxInteraction = FindFirstObjectByType<PlayerBoxInteraction>();
+            if (playerBoxInteraction == null) return;
+        }
+
         if (playerBoxInteraction.isDragging)
         {
             if (!playerBoxInteraction.isMoving)
@@ -188,9 +215,29 @@ public class UI_InGame : MonoBehaviour
         }
     }
     
-    public void UndoButton() => playerBoxInteraction.UndoMove();
+    public void UndoButton()
+    {
+        if (playerBoxInteraction == null)
+        {
+            playerBoxInteraction = FindFirstObjectByType<PlayerBoxInteraction>();
+        }
+        if (playerBoxInteraction != null)
+        {
+            playerBoxInteraction.UndoMove();
+        }
+    }
     
-    public void ResetLevelButton() => playerBoxInteraction.ResetLevel();
+    public void ResetLevelButton()
+    {
+        if (playerBoxInteraction == null)
+        {
+            playerBoxInteraction = FindFirstObjectByType<PlayerBoxInteraction>();
+        }
+        if (playerBoxInteraction != null)
+        {
+            playerBoxInteraction.ResetLevel();
+        }
+    }
 
     public void PauseButton()
     {
